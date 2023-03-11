@@ -1,0 +1,40 @@
+[FATAL] [Sat Mar 11 17:26:44 2023] - sock bind failed
+[FATAL] [Sat Mar 11 17:26:52 2023] - sock bind failed
+[FATAL] [Sat Mar 11 17:27:22 2023] - sock bind failed
+[FATAL] [Sat Mar 11 17:27:28 2023] - sock bind failed
+[FATAL] [Sat Mar 11 17:27:43 2023] - sock bind failed
+[FATAL] [Sat Mar 11 17:28:45 2023] - sock bind failed
+[NORMAL] [Sat Mar 11 17:30:09 2023] - sock create sucess
+[DEBUG] [Sat Mar 11 17:30:09 2023] - 服务器启动
+[DEBUG] [Sat Mar 11 17:30:40 2023] - 127.0.0.1 connect sucess, on port: 57212, socket: 4
+[DEBUG] [Sat Mar 11 17:30:42 2023] - begin inBuffer: 22
+{"op":43,"x":1,"y":2}
+
+
+[DEBUG] [Sat Mar 11 17:30:42 2023] - end inBuffer: 
+[NORMAL] [Sat Mar 11 17:30:42 2023] - package: {"op":43,"x":1,"y":2}
+
+[DEBUG] [Sat Mar 11 17:30:45 2023] - begin inBuffer: 22
+{"op":42,"x":3,"y":0}
+
+
+[DEBUG] [Sat Mar 11 17:30:45 2023] - end inBuffer: 
+[NORMAL] [Sat Mar 11 17:30:45 2023] - package: {"op":42,"x":3,"y":0}
+
+[DEBUG] [Sat Mar 11 17:31:31 2023] - begin inBuffer: 22
+{"op":42,"x":1,"y":9}
+
+
+[DEBUG] [Sat Mar 11 17:31:31 2023] - end inBuffer: 
+[NORMAL] [Sat Mar 11 17:31:31 2023] - package: {"op":42,"x":1,"y":9}
+
+[NORMAL] [Sat Mar 11 17:32:44 2023] - client quit
+[DEBUG] [Sat Mar 11 17:33:23 2023] - 127.0.0.1 connect sucess, on port: 57388, socket: 5
+[DEBUG] [Sat Mar 11 17:33:27 2023] - begin inBuffer: 23
+{"op":42,"x":8,"y":-8}
+
+
+[DEBUG] [Sat Mar 11 17:33:27 2023] - end inBuffer: 
+[NORMAL] [Sat Mar 11 17:33:27 2023] - package: {"op":42,"x":8,"y":-8}
+
+[NORMAL] [Sat Mar 11 17:34:35 2023] - client quit
