@@ -1,0 +1,51 @@
+#pragma once
+#include <stdarg.h>
+#include <stdio.h>
+#include <time.h>
+#include <sys/time.h>
+#include <string>
+#include <cstring>
+
+#define DEBUG   0
+#define NORMAL  1
+#define WARNING 2
+#define ERROR   3
+#define FATAL   4
+
+const char* levalToStr(int level){
+    const char *levels[] = {
+        "DEBUG",
+        "NORMAL",
+        "WARNING",
+        "ERROR",
+        "FATAL"};
+    return levels[level];
+}
+
+void logMessage(int level, const char* format, ...){
+    // 日志文件
+    // const char *filename = "calculator.log";
+    // FILE *fp = fopen(filename, "a");
+    // 标准日志缓冲区
+    char stdBuffer[1024];
+    // 日志等级, 日期等信息
+    time_t t;
+    time(&t);
+    char *curTime = ctime(&t);
+    size_t len = strlen(curTime);
+    curTime[len - 1] = '\0';
+    snprintf(stdBuffer, sizeof(stdBuffer), "[%s] [%s]", levalToStr(level), curTime);
+    // 用户自定义信息缓冲区
+    char userBuffer[1024];
+    // 本质就是一个 char*
+    va_list va;
+    // 将指针指向参数列表的参数
+    va_start(va, format);
+    // 讲可变参数列表对应输出
+    vsnprintf(userBuffer, sizeof(userBuffer), format, va);
+    // 将va置空
+    va_end(va);
+    // fprintf(fp, "%s - %s\n", stdBuffer, userBuffer);
+    printf("%s %s\n", stdBuffer, userBuffer);
+    // fclose(fp);
+}
