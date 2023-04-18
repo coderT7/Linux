@@ -5,6 +5,6 @@ using namespace ns_compile;
 int main()
 {
     Compiler::compile("test");
-    Runner::run("test");
+    Runner::run("test", 1, 1000);
     return 0;
 }
