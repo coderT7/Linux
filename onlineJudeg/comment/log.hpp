@@ -19,12 +19,7 @@ namespace ns_log
 
     inline std::ostream &log(const std::string& level, const std::string &file_name, int line)
     {
-        // 获取当前时间
-        time_t t;
-        time(&t);
-        char *curTime = ctime(&t);
-        size_t len = strlen(curTime);
-        curTime[len - 1] = '\0';
+        std::string curTime = TimeUtil::getCurTime();
         std::string res = "[";
         res += level;
         res += "]";

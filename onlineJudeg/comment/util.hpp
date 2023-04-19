@@ -1,10 +1,34 @@
 #pragma once
 #include <string>
+#include <atomic>
+#include <fstream>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <sys/time.h>
 namespace ns_util
 {
+    class TimeUtil
+    {
+    public:
+        static std::string getCurTime()
+        {
+            // 获取当前时间
+            time_t t;
+            time(&t);
+            char *curTime = ctime(&t);
+            size_t len = strlen(curTime);
+            curTime[len - 1] = '\0';
+            return curTime;
+        }
+        static std::string getTimeofMS()
+        {
+            struct timeval _time;
+            gettimeofday(&_time, nullptr);
+            // 毫秒数
+            return std::to_string(_time.tv_sec * 1000 + _time.tv_usec / 1000);
+        }
+    };
     // 用于路径的拼接的工具
     class PathUtil
     {
@@ -59,6 +83,41 @@ namespace ns_util
                 return true;
             else
                 return false;
+        }
+        static std::string getUniqueFileName()
+        {
+            // 获取一个具备原子性的整数
+            static std::atomic_uint id(0);
+            id++;
+            std::string ms = TimeUtil::getTimeofMS();
+            std::string unique_id = to_string(id);
+            return ms + "_" + unique_id;
+        }
+        static bool writeCodeToFile(const std::string path_name, const std::string &content)
+        {
+            std::ofstream out(path_name);
+            if(!out.is_open())
+                return false;
+            out.write(content.c_str(), content.size());
+            out.close();
+            return true;
+        }
+
+        static bool readFile(const std::string path_name, std::string& content, bool keep = false)
+        {
+            content.clear();
+            std::ifstream in(path_name);
+            if(!in.is_open())
+                return false;
+            std::string line;
+            // getline默认会去掉\n，所以我们要看情况选择是否要保留\n
+            while(std::getline(in, line))
+            {
+                content += line;
+                content += (keep ? "\n" : "");
+            }
+            in.close();
+            return true;
         }
     };
 }
