@@ -151,7 +151,7 @@ namespace ns_compile_run
             }
             Json::StyledWriter writer;
             *out_json = writer.write(out_value);
-            // RemoveTempFile(file_name); // 清空临时文件
+            RemoveTempFile(file_name); // 清空临时文件
         }
     };
 }

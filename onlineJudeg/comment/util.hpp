@@ -6,8 +6,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <string.h>
 namespace ns_util
 {
+    const static std::string temp_path = "./temp/";
     class TimeUtil
     {
     public:
@@ -35,7 +37,7 @@ namespace ns_util
     public:
         static std::string add_suffix(const std::string &file_name, const std::string &suffix)
         {
-            std::string res = "./temp/";
+            std::string res = temp_path;
             res += file_name;
             res += suffix;
             return res;
