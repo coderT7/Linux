@@ -2,11 +2,13 @@
 #include <string>
 #include <atomic>
 #include <fstream>
+#include <vector>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/time.h>
 #include <string.h>
+#include <boost/algorithm/string.hpp>
 namespace ns_util
 {
     const static std::string temp_path = "./temp/";
@@ -29,6 +31,15 @@ namespace ns_util
             gettimeofday(&_time, nullptr);
             // 毫秒数
             return std::to_string(_time.tv_sec * 1000 + _time.tv_usec / 1000);
+        }
+    };
+    class StringUtil
+    {
+    public:
+        static void splitString(const std::string& str, std::vector<std::string>& res, const std::string& sep)
+        {
+            // 使用boost库的字符串切割函数进行切分
+            boost::split(res, str, boost::is_any_of(sep), boost::algorithm::token_compress_on);
         }
     };
     // 用于路径的拼接的工具
