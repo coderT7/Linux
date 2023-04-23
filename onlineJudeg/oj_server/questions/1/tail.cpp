@@ -1,5 +1,5 @@
 #ifndef COMPILER_ONLINE
-#include "body.cpp"
+#include "header.cpp"
 #endif
 
 void Test1()

@@ -30,7 +30,7 @@ namespace ns_model
         // 测试用例
         string _tail;
     };
-    const string question_list_path = "./questions/questions.list";
+    const string question_list_path = "./questions/question.list";
     const string question_path = "./questions/";
     // 根据数据文件向外提供资源访问接口
     class Model
@@ -39,7 +39,8 @@ namespace ns_model
         unordered_map<string, Question> questions_map;
 
     public:
-        Model() {
+        Model()
+        {
             // 必须加载所有题目成功，否则整个系统无法运行
             assert(loadAllQuestions());
         }
@@ -47,18 +48,20 @@ namespace ns_model
         bool loadAllQuestions()
         {
             ifstream in(question_list_path);
-            if(!in.is_open()){
+            if (!in.is_open())
+            {
                 LOG(FATAL) << "题目列表文件打开失败，请检查题目列表文件"
                            << "\n";
                 return false;
             }
             string line;
-            while(getline(in, line))
+            while (getline(in, line))
             {
                 vector<string> questionV;
                 StringUtil::splitString(line, questionV, " ");
                 // 我们的题目列表默认有五列（五个项），不足五项则说明该行有问题，我们直接先跳过
-                if(questionV.size() != 5){
+                if (questionV.size() != 5)
+                {
                     LOG(WARNING) << "出现单个题目获取失败，请检查题目文件"
                                  << "\n";
                     continue;
@@ -74,21 +77,27 @@ namespace ns_model
                 // 获取题目的具体信息
                 string curQuestionPath = question_path + question._number + "/"; // 具体题目文件的路径
                 ifstream questionIn(curQuestionPath);
-                if(!questionIn.is_open())
+                if (!questionIn.is_open())
                     return false;
                 FileUtil::readFile(curQuestionPath + "desc.txt", question._desc, true);
                 FileUtil::readFile(curQuestionPath + "header.cpp", question._header, true);
                 FileUtil::readFile(curQuestionPath + "tail.cpp", question._tail, true);
+                questions_map.insert({question._number, question});
+                LOG(DEBUG) << "成功加载题目文件：" << question._number << "\n";
             }
             LOG(DEBUG) << "加载题目列表文件完毕"
-                      << "\n";
+                       << "\n";
             in.close();
+            return true;
         }
         // 获取所有的题目列表
-        bool getAllQuestions(vector<Question> questions)
+        bool getAllQuestions(vector<Question>& questions)
         {
             if (questions_map.empty())
+            {
+                LOG(ERROR) << "题目列表为空，请检查" << "\n";
                 return false;
+            }
             for (auto &val : questions_map)
             {
                 questions.push_back(val.second);

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>题目列表</title>
+</head>
+
+<body>
+    <table>
+        <tr>
+            <th>题目编号</th>
+            <th>题目名称</th>
+            <th>题目难度</th>
+        </tr>
+        {{#question_list}}
+        <tr>
+            <td>{{number}}</td>
+            <td><a href="/question/{{number}}">{{name}}</a></td>
+            <td>{{level}}</td>
+        </tr>
+        {{/question_list}}
+
+    </table>
+</body>
+
+</html>
