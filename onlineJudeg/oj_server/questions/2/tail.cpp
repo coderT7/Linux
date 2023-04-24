@@ -8,11 +8,11 @@ void Test01()
     int ret = Solution().find_max(nums);
     if (ret == 9)
     {
-        cout << "test passed" << endl;
+        cout << "test1 passed" << endl;
     }
     else
     {
-        cout << "test failed" << endl;
+        cout << "test1 failed" << endl;
     }
 }
 void Test02()
@@ -21,11 +21,11 @@ void Test02()
     int ret = Solution().find_max(nums);
     if (ret == -1)
     {
-        cout << "test passed" << endl;
+        cout << "test2 passed" << endl;
     }
     else
     {
-        cout << "test failed" << endl;
+        cout << "test2 failed" << endl;
     }
 }
 

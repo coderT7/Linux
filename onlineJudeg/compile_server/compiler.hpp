@@ -43,7 +43,9 @@ namespace ns_compile
                 // 将标准错误重定向到错误文件上
                 dup2(_compile_fd, 2);
                 // 子进程
-                int res = execlp("g++", "g++", "-o", PathUtil::exe(file_name).c_str(), PathUtil::src(file_name).c_str(), nullptr);
+                // 编译时添加-D选项去除oj_server的代码中带的多余代码行（条件编译）
+                int res = execlp("g++", "g++", "-o", PathUtil::exe(file_name).c_str(), \
+                PathUtil::src(file_name).c_str(), "-std=c++11", "-D", "COMPILER_ONLINE", nullptr);
                 if (res < 0)
                 {
                     LOG(ERROR) << "启动编译器失败，请检查参数"

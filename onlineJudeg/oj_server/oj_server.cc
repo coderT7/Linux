@@ -21,9 +21,11 @@ int main()
         ctrl.getOneOfQuestions(number, html);
         resp.set_content(html, "text/html; charset=utf-8"); });
     // 访问代码编译资源
-    svr.Get(R"(/judge/(\d+))", [](const Request &req, Response &resp)
+    svr.Get(R"(/judge/(\d+))", [&ctrl](const Request &req, Response &resp)
             {
                 std::string number = req.matches[1];
-                resp.set_content("判断题目：" + number, "text/plain; charset=utf-8"); });
+                std::string out_json; 
+                ctrl.judge(number, req.body, out_json);
+                resp.set_content(out_json, "application/json; charset=utf-8"); });
     svr.listen("0.0.0.0", 8080);
 }

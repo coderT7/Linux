@@ -3,8 +3,10 @@
 #include <vector>
 #include <cassert>
 #include <fstream>
+#include <jsoncpp/json/json.h>
 #include "../comment/log.hpp"
 #include "../comment/util.hpp"
+#include "../comment/httplib.h"
 #include "oj_model.hpp"
 #include "oj_model.hpp"
 #include "oj_view.hpp"
@@ -14,7 +16,7 @@ namespace ns_control
     using namespace ns_util;
     using namespace ns_log;
     using namespace ns_view;
-
+    using namespace httplib;
     class Machine
     {
     public:
@@ -120,6 +122,7 @@ namespace ns_control
         }
         bool smartChoice(int &id, Machine *&machine)
         {
+            LOG(DEBUG) << "当前在线主机个数：" << online.size() << "\n"; 
             mtx->lock();
             // 没有在线机器则返回false
             if (online.size() == 0)
@@ -137,17 +140,35 @@ namespace ns_control
                 {
                     min_load = cur_load;
                     id = online[i];
-                    machine = &machines[online[i]];
                 }
             }
+            machine = &machines[id];
+            if (machine)
+                LOG(INFO) << "完成智能选择" << machine->ip << ":" << machine->port
+                          << "\n";
             mtx->unlock();
             return true;
         }
         void onlineMachine()
         {
         }
-        void offlineMachine()
+        void offlineMachine(int id)
         {
+            // 可能同时很多台主机进行离线，需进行枷锁
+            mtx->lock();
+            // 遍历找到该主机，对应转移下标即可
+            for (auto iter = online.begin(); iter != online.end(); iter++)
+            {
+                if (*iter == id)
+                {
+                    online.erase(iter);
+                    offline.push_back(id);
+                    // 直接break，故不需要考虑迭代器失效
+                    LOG(DEBUG) << "下线主机：" << id << "\n";
+                    break;
+                }
+            }
+            mtx->unlock();
         }
     };
 
@@ -191,6 +212,70 @@ namespace ns_control
             // 获取到题目后构建html返回
             _view.expandOneQuestion(q, &html);
             return true;
+        }
+        void judge(const std::string &number, const std::string &in_json, std::string &out_json)
+        {
+            LOG(DEBUG) << "准备进行判题：" << in_json << "\n";
+            // 获取对应的题目
+            Question question;
+            _model.getOneQuestion(number, question);
+            // 将请求反序列化获取用户上传的代码等数据
+            Json::Value root;
+            Json::Reader reader;
+            reader.parse(in_json, root);
+            std::string code = root["code"].asString();
+            std::string input = root["input"].asString();
+            int cpu_limit = question._cpu_limit;
+            int mem_limit = question._mem_limit;
+            Json::Value compile;
+            Json::FastWriter writer;
+            // 将用户代码拼接测试用例后发给后端编译服务
+            compile["code"] = code + question._tail;
+            compile["input"] = input;
+            compile["cpu_limit"] = cpu_limit;
+            compile["mem_limit"] = mem_limit;
+            std::string compile_json = writer.write(compile);
+            LOG(DEBUG) << "成功获取compile_json" << compile_json << "\n";
+            // 负载均衡选择主机进行服务
+            // 采取轮询式获取负载均衡最小的主机
+            while (true)
+            {
+                LOG(DEBUG) << "开始进行负载均衡选择"
+                           << "\n";
+                int id = 0;
+                Machine *machine = nullptr;
+                // 负载均衡选择负载最小的主机
+                if (!_load_blance.smartChoice(id, machine))
+                {
+                    LOG(DEBUG) << "智能选择失败"
+                               << "\n";
+                    break;
+                }
+                LOG(INFO) << "智能选择服务主机成功，主机IP：" << machine->ip << "；主机端口号" << machine->port << "\n";
+                // 新建客户端
+                Client client(machine->ip, machine->port);
+                // 增加负载
+                machine->loadIncr();
+                // 成功获取响应
+                if (auto res = client.Post("/compile_and_run", compile_json, "application/json;charset=utf-8"))
+                {
+                    // 状态码为200才是我们想要获取的响应
+                    if (res->status == 200)
+                    {
+                        LOG(INFO) << "成功获取响应"
+                                  << res->body << "\n";
+                        out_json = res->body;
+                        break;
+                    }
+                }
+                else
+                {
+                    LOG(ERROR) << "请求主机id：" << id << "失败"
+                               << " ，主机ip：" << machine->ip << "端口号：" << machine->port << "\n";
+                    _load_blance.offlineMachine(id);
+                }
+                machine->loadDecr();
+            }
         }
     };
 }
