@@ -60,6 +60,13 @@ namespace ns_control
                 mtx->unlock();
             return _load;
         }
+        void resetLoad(){
+            if (mtx)
+                mtx->lock();
+            load = 0;
+            if (mtx)
+                mtx->unlock();
+        }
     };
     const std::string machine_conf = "./config/server_machine.conf";
     class LoadBlance
@@ -116,13 +123,13 @@ namespace ns_control
                 online.push_back(machines.size());
                 machines.push_back(machine);
             }
-            LOG(INFO) << "加载机器配置成功"
-                      << "\n";
+            // LOG(INFO) << "加载机器配置成功"
+            //           << "\n";
             return true;
         }
         bool smartChoice(int &id, Machine *&machine)
         {
-            LOG(DEBUG) << "当前在线主机个数：" << online.size() << "\n"; 
+            // LOG(DEBUG) << "当前在线主机个数：" << online.size() << "\n"; 
             mtx->lock();
             // 没有在线机器则返回false
             if (online.size() == 0)
@@ -143,14 +150,20 @@ namespace ns_control
                 }
             }
             machine = &machines[id];
-            if (machine)
-                LOG(INFO) << "完成智能选择" << machine->ip << ":" << machine->port
-                          << "\n";
+            // if (machine)
+            //     LOG(INFO) << "完成智能选择" << machine->ip << ":" << machine->port
+            //               << "\n";
             mtx->unlock();
             return true;
         }
         void onlineMachine()
         {
+            mtx->lock();
+            online.insert(online.end(), offline.begin(), offline.end());
+            offline.erase(offline.begin(), offline.end());
+            mtx->unlock();
+            // LOG(INFO) << "所有主机再次上线"
+            //           << "\n";
         }
         void offlineMachine(int id)
         {
@@ -161,6 +174,8 @@ namespace ns_control
             {
                 if (*iter == id)
                 {
+                    // 清空负载
+                    machines[*iter].resetLoad();
                     online.erase(iter);
                     offline.push_back(id);
                     // 直接break，故不需要考虑迭代器失效
@@ -213,9 +228,12 @@ namespace ns_control
             _view.expandOneQuestion(q, &html);
             return true;
         }
+        void recoveryMachine(){
+            _load_blance.onlineMachine();
+        }
         void judge(const std::string &number, const std::string &in_json, std::string &out_json)
         {
-            LOG(DEBUG) << "准备进行判题：" << in_json << "\n";
+            // LOG(DEBUG) << "准备进行判题：" << in_json << "\n";
             // 获取对应的题目
             Question question;
             _model.getOneQuestion(number, question);
@@ -230,48 +248,52 @@ namespace ns_control
             Json::Value compile;
             Json::FastWriter writer;
             // 将用户代码拼接测试用例后发给后端编译服务
-            compile["code"] = code + question._tail;
+            compile["code"] = code + "\n" + question._tail;
             compile["input"] = input;
             compile["cpu_limit"] = cpu_limit;
             compile["mem_limit"] = mem_limit;
             std::string compile_json = writer.write(compile);
-            LOG(DEBUG) << "成功获取compile_json" << compile_json << "\n";
+            // LOG(DEBUG) << "成功获取compile_json" << compile_json << "\n";
             // 负载均衡选择主机进行服务
             // 采取轮询式获取负载均衡最小的主机
             while (true)
             {
-                LOG(DEBUG) << "开始进行负载均衡选择"
-                           << "\n";
+                // LOG(DEBUG) << "开始进行负载均衡选择"
+                //            << "\n";
                 int id = 0;
                 Machine *machine = nullptr;
                 // 负载均衡选择负载最小的主机
                 if (!_load_blance.smartChoice(id, machine))
                 {
-                    LOG(DEBUG) << "智能选择失败"
-                               << "\n";
+                    LOG(DEBUG)
+                        << "智能选择失败"
+                        << "\n";
                     break;
                 }
-                LOG(INFO) << "智能选择服务主机成功，主机IP：" << machine->ip << "；主机端口号" << machine->port << "\n";
                 // 新建客户端
                 Client client(machine->ip, machine->port);
                 // 增加负载
                 machine->loadIncr();
+                // LOG(INFO) << "智能选择服务主机成功，主机IP：" << machine->ip << "；主机端口号：" << machine->port << "；主机负载：" << machine->load << "\n";
                 // 成功获取响应
                 if (auto res = client.Post("/compile_and_run", compile_json, "application/json;charset=utf-8"))
                 {
                     // 状态码为200才是我们想要获取的响应
                     if (res->status == 200)
                     {
-                        LOG(INFO) << "成功获取响应"
-                                  << res->body << "\n";
+                        // LOG(INFO) << "成功获取响应"
+                        //           << res->body << "\n";
+                        // LOG(INFO) << "请求编译运行服务成功获得响应"
+                        //           << "\n";
                         out_json = res->body;
+                        machine->loadDecr();
                         break;
                     }
                 }
                 else
                 {
                     LOG(ERROR) << "请求主机id：" << id << "失败"
-                               << " ，主机ip：" << machine->ip << "端口号：" << machine->port << "\n";
+                               << "\n主机ip：" << machine->ip << "端口号：" << machine->port << "\n";
                     _load_blance.offlineMachine(id);
                 }
                 machine->loadDecr();

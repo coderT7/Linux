@@ -59,13 +59,13 @@ namespace ns_compile_run
                 FileUtil::readFile(PathUtil::compile_error_file(file_name), desc, true);
                 break;
             case 0:
-                desc = "运行完毕";
+                desc = "编译运行完毕!";
                 break;
             case SIGABRT:
                 desc = "内存超过使用限制";
                 break;
             case SIGXCPU:
-                desc = "运行超时";
+                desc = "运行时间超出限制";
                 break;
             case SIGFPE:
                 desc = "浮点数溢出";
@@ -100,7 +100,7 @@ namespace ns_compile_run
             // 取出来的代码数据需要写入一个具有唯一性的文件名中
             // 获取一个唯一性的文件名 (毫秒级时间戳+原子性递增唯一值: 来保证唯一性)
             file_name = FileUtil::getUniqueFileName();
-            LOG(DEBUG) << "唯一文件形成成功" << file_name << "\n";
+            // LOG(DEBUG) << "唯一文件形成成功" << file_name << "\n";
             // 将代码写入该文件中
             if (!FileUtil::writeCodeToFile(PathUtil::src(file_name), code))
             {
@@ -139,6 +139,8 @@ namespace ns_compile_run
             out_value["reason"] = codeToDesc(status_code, file_name);
             if (status_code == 0)
             {
+                LOG(INFO) << "编译运行成功"
+                          << "\n";
                 // 状态码为0，则意味着我们的程序运行完毕，我们将输出的内容构建于响应返回
                 // 我们编译运行时，我们已经将对应的内容写到了对应的文件中，我们读取文件中的内容即可
                 std::string _stdout;

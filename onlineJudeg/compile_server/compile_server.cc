@@ -1,9 +1,8 @@
 #include "compile_run.hpp"
 #include "../comment/httplib.h"
-
+#include "Daemon.hpp"
 using namespace ns_compile_run;
 using namespace httplib;
-
 void Usage(char argv[])
 {
         std::cout << argv << " port" << std::endl;
@@ -13,6 +12,7 @@ void Usage(char argv[])
 // 唯一性，要不然多个用户之间会互相影响
 int main(int argc, char *argv[])
 {
+        Daemon();
         if (argc != 2)
         {
                 Usage(argv[0]);

@@ -1,13 +1,232 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{number}}.{{name}}.{{level}}</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.6/ace.js" type="text/javascript"
+        charset="utf-8"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.6/ext-language_tools.js" type="text/javascript"
+        charset="utf-8"></script>
+    <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <style>
+        * {
+            /* 消除网页的默认内，外边距 */
+            margin: 0px;
+            padding: 0px;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100px;
+        }
+
+        .container .navbar a {
+            display: inline-block;
+            width: 80px;
+            text-decoration: none;
+            color: white;
+            font-size: large;
+            line-height: 50px;
+            text-align: center;
+        }
+
+        /* 设置鼠标事件 */
+        .container .navbar a:hover {
+            background-color: #ccc;
+        }
+
+        .container .navbar .login {
+            float: right;
+        }
+
+        .container .navbar {
+            width: 100%;
+            height: 50px;
+            background-color: black;
+            /* 给父级标签设置overflow以取消后续浮动带来的影响 */
+            overflow: hidden;
+        }
+
+        .container .part1 {
+            width: 100%;
+            height: 600px;
+            overflow: hidden;
+        }
+
+        .container .part1 .left_desc {
+            width: 50%;
+            height: 600px;
+            /* 左浮动 */
+            float: left;
+            overflow: scroll;
+        }
+
+        .container .part1 .left_desc h3 {
+            padding-top: 10px;
+            padding-left: 10px;
+        }
+
+        .container .part1 .left_desc pre {
+            padding-top: 10px;
+            padding-left: 10px;
+            font-size: medium;
+            font-family: 'Times New Roman', Times, serif;
+        }
+
+        .container .part1 .right_code {
+            width: 50%;
+            /* 右浮动 */
+            float: right;
+        }
+
+        .container .part1 .right_code .ace_editor {
+            height: 600px;
+        }
+
+        .container .part2 {
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .container .part2 .result {
+            width: 300px;
+            float: left;
+        }
+
+        .container .part2 .btn-submit {
+            width: 80px;
+            height: 50px;
+            float: right;
+            background-color: #26bb9c;
+            color: #fff;
+            border-radius: 1ch;
+            border: 0px;
+            margin-top: 10px;
+            margin-right: 10px;
+        }
+
+        .container .part2 button:hover {
+            background-color: rgb(218, 245, 235);
+            /* color:aquamarine; */
+        }
+        .container .part2 .result{
+            margin-top: 15px;
+            margin-left: 15px;
+        }
+        .container .part2 pre{
+            font-family: 'Times New Roman', Times, serif;
+            font-size: large;
+        }
+    </style>
 </head>
+
 <body>
-    <p>{{desc}}</p>
-    <textarea>{{header}}</textarea>
+    <div class="container">
+        <!-- 导航栏 -->
+        <div class="navbar">
+            <a href="/">首页</a>
+            <a href="/question_list">题库</a>
+            <a href="#">竞赛</a>
+            <a href="#">讨论</a>
+            <a href="#">求职</a>
+            <a class="login" href="#">登录</a>
+        </div>
+        <div class="part1">
+            <div class="left_desc">
+                <h3><span id="number">{{number}}</span>.{{name}}-{{level}}</h3>
+                <pre>{{desc}}</pre>
+            </div>
+            <div class="right_code">
+                <pre id="code" class="ace_editor"><textarea class="ace_text-input">{{header}}</textarea></pre>
+            </div>
+        </div>
+        <div class="part2">
+            <div class="result"></div>
+            <button class="btn-submit" onclick="submit()">提交代码</button>
+        </div>
+        <script>
+            //初始化对象
+            editor = ace.edit("code");
+            //设置风格和语言（更多风格和语言，请到github上相应目录查看）
+            // 主题大全：http://www.manongjc.com/detail/25-cfpdrwkkivkikmk.html
+            editor.setTheme("ace/theme/monokai");
+            editor.session.setMode("ace/mode/c_cpp");
+            // 字体大小
+            editor.setFontSize(16);
+            // 设置默认制表符的大小:
+            editor.getSession().setTabSize(4);
+            // 设置只读（true时只读，用于展示代码）
+            editor.setReadOnly(false);
+            // 启用提示菜单
+            ace.require("ace/ext/language_tools");
+            editor.setOptions({
+                enableBasicAutocompletion: true,
+                enableSnippets: true,
+                enableLiveAutocompletion: true
+            });
+            function submit() {
+                // 获得代码和题号
+                var code = editor.getSession().getValue();
+                // console.log(code);
+                var number = $(".container .part1 .left_desc h3 #number").text();
+                // console.log(number)
+                // 获取请求URL
+                var judge_url = "/judge/" + number;
+                // console.log(judge_url);
+                // 构建json，通过Ajax向后端发起基于http的json请求
+                $.ajax({
+                    method: 'Post',// 向后端请求的方式
+                    url: judge_url,// 向后端请求的url
+                    dataType: 'json',
+                    contentType: 'application/json;charset=utf-8',
+                    data: JSON.stringify({
+                        'code': code,
+                        'input': ''
+                    }),
+                    success: function (data) {
+                        // 成功得到响应
+                        // console.log(data);
+                        show_result(data);
+                    }
+                })
+                function show_result(data) {
+                    // 获取网页中结果显示的div标签
+                    var res_div = $(".container .part2 .result");
+                    // 清空上一次的结果
+                    res_div.empty();
+                    // 获取结果的状态码和原因
+                    var status = data.status;
+                    var reason = data.reason;
+                    var reason_lable = $("<p>", {
+                        text: reason
+                    });
+                    reason_lable.appendTo(res_div);
+
+                    if (status == 0) {
+                        // 请求成功（编译运行未出问题，具体结果根据测试用例决定
+                        var _stdout = data.stdout;
+                        var _stderr = data.stderr;
+
+                        var stdout_lable = $("<pre>", {
+                            text: _stdout
+                        });
+                        var stderr_lable = $("<pre>", {
+                            text: _stderr
+                        });
+                        stdout_lable.appendTo(res_div);
+                        stderr_lable.appendTo(res_div);
+                    } else {
+                        // DO NOTHING
+                    }
+                }
+            }
+        </script>
+    </div>
+
 </body>
+
 </html>

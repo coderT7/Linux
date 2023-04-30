@@ -1,13 +1,82 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>个人OJ项目</title>
+    <style>
+        * {
+            /* 消除网页的默认内，外边距 */
+            margin: 0px;
+            padding: 0px;
+        }
+        html,
+        body {
+            width: 100%;
+            height: 100px; 
+        }
+        .container .content{
+            /* 标签的宽度 */
+            width: 800px;
+            /* background-color: #ccc; */
+            /* 整体网页内容居中 */
+            margin: 0px auto;
+            /* 设置文字居中 */
+            text-align: center;
+            /* 设置上外边距 */
+            margin-top: 200px;
+        }
+        .container .content ._font{
+            display: block;
+            margin-top: 20px;
+            text-decoration: none;
+        }
+        .container .navbar a{
+            display: inline-block;
+            width: 80px;
+            text-decoration: none;
+            color: white;
+            font-size: large;
+            line-height: 50px;
+            text-align: center;
+        }
+        /* 设置鼠标事件 */
+        .container .navbar a:hover{
+            background-color: #ccc;
+        }
+        .container .navbar .login{
+            float: right;
+        }
+        .container .navbar{
+            width: 100%;
+            height: 50px;
+            background-color: black;
+            /* 给父级标签设置overflow以取消后续浮动带来的影响 */
+            overflow: hidden;
+        }
+    </style>
 </head>
+
 <body>
-    <h1>你好，这是个人设计的OJ系统</h1>
-    <a href="/question_list">点击这里开始编程</a>
+    <div class="container">
+        <!-- 导航栏 -->
+        <div class="navbar">
+            <a href="/">首页</a>
+            <a href="/question_list">题库</a>
+            <a href="#">竞赛</a>
+            <a href="#">讨论</a>
+            <a href="#">求职</a>
+            <a class="login" href="#">登录</a>
+        </div>
+        <!-- 网页内容 -->
+        <div class="content">
+            <h1 class="_font">Online Judge</h1>
+            <p class="_font">独立开发的在线OJ系统，用于练习</p>
+            <a class="_font" href="/question_list">点击这里开始编程</a>
+        </div>
+    </div>
 </body>
+
 </html>

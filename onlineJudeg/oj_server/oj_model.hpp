@@ -3,11 +3,13 @@
 #include <boost/algorithm/string.hpp>
 #include <iostream>
 #include <unordered_map>
+#include <algorithm>
 #include <vector>
 #include <cassert>
 #include <fstream>
 #include "../comment/log.hpp"
 #include "../comment/util.hpp"
+#include "include/mysql.h"
 
 namespace ns_model
 {
@@ -30,93 +32,97 @@ namespace ns_model
         // 测试用例
         string _tail;
     };
-    const string question_list_path = "./questions/question.list";
-    const string question_path = "./questions/";
+    // 数据表名
+    const std::string question_table = "oj_question";
+    // 连接服务端
+    const std::string host = "127.0.0.1";
+    // 连接用户
+    const std::string user = "oj_client";
+    // 登录密码
+    const std::string password = "C123456.xt";
+    // 访问的数据库
+    const std::string db = "oj";
+    // 访问的端口
+    const int port = 3306;
     // 根据数据文件向外提供资源访问接口
     class Model
     {
-    private:
-        unordered_map<string, Question> questions_map;
-
     public:
         Model()
         {
-            // 必须加载所有题目成功，否则整个系统无法运行
-            assert(loadAllQuestions());
         }
-        // 加载所有题目列表至内存中
-        bool loadAllQuestions()
+        bool queryMySQL(const std::string &sql, vector<Question> &out)
         {
-            ifstream in(question_list_path);
-            if (!in.is_open())
+            // 获取MySQL句柄
+            MYSQL *mysql = mysql_init(nullptr);
+            // 尝试连接数据库
+            if (nullptr == mysql_real_connect(mysql, host.c_str(), user.c_str(), password.c_str(), db.c_str(), port, nullptr, 0))
             {
-                LOG(FATAL) << "题目列表文件打开失败，请检查题目列表文件"
+                LOG(FATAL) << "连接数据库失败"
                            << "\n";
                 return false;
             }
-            string line;
-            while (getline(in, line))
+            // 设置该连接句柄的编码格式（默认连接使用的编码是拉丁）
+            mysql_set_character_set(mysql, "utf8");
+            // LOG(INFO) << "连接数据库成功"
+            //           << "\n";
+            // 向数据库发起SQL请求
+            if (0 != mysql_query(mysql, sql.c_str()))
             {
-                vector<string> questionV;
-                StringUtil::splitString(line, questionV, " ");
-                // 我们的题目列表默认有五列（五个项），不足五项则说明该行有问题，我们直接先跳过
-                if (questionV.size() != 5)
-                {
-                    LOG(WARNING) << "出现单个题目获取失败，请检查题目文件"
-                                 << "\n";
-                    continue;
-                }
-                Question question;
-                // 1 回文数 简单 1 50000
-                // 题目的基本信息的填充
-                question._number = questionV[0];
-                question._name = questionV[1];
-                question._level = questionV[2];
-                question._cpu_limit = atoi(questionV[3].c_str());
-                question._mem_limit = atoi(questionV[4].c_str());
-                // 获取题目的具体信息
-                string curQuestionPath = question_path + question._number + "/"; // 具体题目文件的路径
-                ifstream questionIn(curQuestionPath);
-                if (!questionIn.is_open())
-                    return false;
-                FileUtil::readFile(curQuestionPath + "desc.txt", question._desc, true);
-                FileUtil::readFile(curQuestionPath + "header.cpp", question._header, true);
-                FileUtil::readFile(curQuestionPath + "tail.cpp", question._tail, true);
-                questions_map.insert({question._number, question});
-                LOG(DEBUG) << "成功加载题目文件：" << question._number << "\n";
+                LOG(WARNING) << sql << "执行失败"
+                             << "\n";
+                return false;
             }
-            LOG(DEBUG) << "加载题目列表文件完毕"
-                       << "\n";
-            in.close();
+            // 获取查询返回的结果
+            MYSQL_RES *res = mysql_store_result(mysql);
+            // 解析查询返回的结果
+            int rows = mysql_num_rows(res);
+            int cols = mysql_num_fields(res);
+            // 提取每一行，每一列的数据
+            for (int i = 0; i < rows; i++)
+            {
+                MYSQL_ROW row = mysql_fetch_row(res);
+                Question question;
+                question._number = row[0];
+                question._name = row[1];
+                question._level = row[2];
+                question._desc = row[3];
+                question._header = row[4];
+                question._tail = row[5];
+                question._cpu_limit = atoi(row[6]);
+                question._mem_limit = atoi(row[7]);
+                // 插入返回列表中
+                out.push_back(question);
+            }
+            // 由于查询结果是用动态申请的空间保存，所以我们需要手动释放
+            free(res);
+            // 关闭SQL句柄
+            mysql_close(mysql);
             return true;
         }
         // 获取所有的题目列表
-        bool getAllQuestions(vector<Question>& questions)
+        bool getAllQuestions(vector<Question> &questions)
         {
-            if (questions_map.empty())
-            {
-                LOG(ERROR) << "题目列表为空，请检查" << "\n";
-                return false;
-            }
-            for (auto &val : questions_map)
-            {
-                questions.push_back(val.second);
-            }
-            LOG(INFO) << "成功获取所有题目文件"
-                      << "\n";
-            return true;
+            std::string sql = "select * from ";
+            sql += question_table;
+            return queryMySQL(sql, questions);
         }
         // 获取某一道题
         bool getOneQuestion(const string &number, Question &question)
         {
-            auto it = questions_map.find(number);
-            if (it == questions_map.end())
+            std::string sql = "select * from " + question_table + " where ";
+            sql += "id=" + number;
+            vector<Question> result;
+            if (queryMySQL(sql, result))
             {
-                return false;
+                // 获取成功
+                if (result.size() == 1)
+                {
+                    question = result[0];
+                    return true;
+                }
             }
-            question = it->second;
-            LOG(INFO) << "成功获取当前题目，题目编号：" << number << "\n";
-            return true;
+            return false;
         }
         ~Model() {}
     };
